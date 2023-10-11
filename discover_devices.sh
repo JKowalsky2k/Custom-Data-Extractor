@@ -26,7 +26,6 @@ umount_dev () {
 }
 
 copy_all_data () {
-    echo $1 -> $2
     mkdir -p "$COPY_POINT"/"$2"
     cp -a "$1"/. "$COPY_POINT"/"$2"
 }
@@ -34,17 +33,17 @@ copy_all_data () {
 run () {
     if [ ! -z "$DISCOVERED_DEVICES" ]
     then
-        counter=0
+        COUNTER=0
         for DEVICE in $DISCOVERED_DEVICES
         do
-            counter=$(( counter+1 ))
-            echo $counter: $DEVICE
+            COUNTER=$(( COUNTER+1 ))
+            echo "$COUNTER": "$DEVICE"
             DEVICE_NAME=$(echo $DEVICE | cut -d "/" -f 3)
             DEVICE_MOUNT_PATH="$MOUNT_POINT"/"$DEVICE_NAME"
-            mount_dev $DEVICE_MOUNT_PATH $DEVICE
-            copy_all_data $DEVICE_MOUNT_PATH $DEVICE_NAME
-            ls -la $COPY_POINT/$DEVICE_NAME
-            umount_dev $DEVICE_MOUNT_PATH
+            mount_dev "$DEVICE_MOUNT_PATH" "$DEVICE"
+            copy_all_data "$DEVICE_MOUNT_PATH" "$DEVICE_NAME"
+            ls -la "$COPY_POINT"/"$DEVICE_NAME"
+            umount_dev "$DEVICE_MOUNT_PATH"
         done
     else
         echo No devices detected!
