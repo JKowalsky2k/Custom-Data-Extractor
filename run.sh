@@ -1,10 +1,13 @@
-#!/bin/sh
+#!/bin/bash
 
 PROGRAM_NAME="CDE"
 DATA_DIR="$HOME"/"$PROGRAM_NAME"
 MOUNT_POINT="$DATA_DIR"/mnt
 COPY_POINT="$DATA_DIR"/backup
-
+declare -rA FILE_SYSTEMS=(  ["vfat"]="Virtual FAT" \
+                            ["hfsplus"]="Mac OS Extended (Case-sensitive, Journaled)" \
+                            ["exfat"]="ExFAT" \
+                            [])
 discover () {
     echo "Disconnect the flash drive"
     mkdir -p "$DATA_DIR"
@@ -27,10 +30,16 @@ umount_dev () {
 
 copy_all_data () {
     mkdir -p "$COPY_POINT"/"$2"
-    cp -a "$1"/. "$COPY_POINT"/"$2"
+    sudo cp -a "$1"/. "$COPY_POINT"/"$2"
+}
+
+detect_filesystem () {
+    FILE_SYSTEM=$(lsblk -n -o FSTYPE $1)
+    echo File system: "${FILE_SYSTEMS["$FILE_SYSTEM"]}" \("$FILE_SYSTEM"\)
 }
 
 run () {
+    discover
     if [ ! -z "$DISCOVERED_DEVICES" ]
     then
         COUNTER=0
@@ -41,6 +50,7 @@ run () {
             DEVICE_NAME=$(echo $DEVICE | cut -d "/" -f 3)
             DEVICE_MOUNT_PATH="$MOUNT_POINT"/"$DEVICE_NAME"
             mount_dev "$DEVICE_MOUNT_PATH" "$DEVICE"
+            detect_filesystem $DEVICE
             copy_all_data "$DEVICE_MOUNT_PATH" "$DEVICE_NAME"
             ls -la "$COPY_POINT"/"$DEVICE_NAME"
             umount_dev "$DEVICE_MOUNT_PATH"
@@ -50,5 +60,4 @@ run () {
     fi
 }
 
-discover
 run
