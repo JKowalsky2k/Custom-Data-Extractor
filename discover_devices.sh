@@ -3,6 +3,7 @@
 PROGRAM_NAME="CDE"
 DATA_DIR="$HOME"/"$PROGRAM_NAME"
 MOUNT_POINT="$DATA_DIR"/mnt
+COPY_POINT="$DATA_DIR"/backup
 
 discover () {
     echo "Disconnect the flash drive"
@@ -24,6 +25,12 @@ umount_dev () {
     rmdir "$1"
 }
 
+copy_all_data () {
+    echo $1 -> $2
+    mkdir -p "$COPY_POINT"/"$2"
+    cp -a "$1"/. "$COPY_POINT"/"$2"
+}
+
 run () {
     if [ ! -z "$DISCOVERED_DEVICES" ]
     then
@@ -35,7 +42,8 @@ run () {
             DEVICE_NAME=$(echo $DEVICE | cut -d "/" -f 3)
             DEVICE_MOUNT_PATH="$MOUNT_POINT"/"$DEVICE_NAME"
             mount_dev $DEVICE_MOUNT_PATH $DEVICE
-            ls -la "$DEVICE_MOUNT_PATH"
+            copy_all_data $DEVICE_MOUNT_PATH $DEVICE_NAME
+            ls -la $COPY_POINT/$DEVICE_NAME
             umount_dev $DEVICE_MOUNT_PATH
         done
     else
