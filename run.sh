@@ -6,16 +6,23 @@ MOUNT_POINT="$DATA_DIR"/mnt
 COPY_POINT="$DATA_DIR"/backup
 declare -rA FILE_SYSTEMS=(  ["vfat"]="Virtual FAT" \
                             ["hfsplus"]="Mac OS Extended (Case-sensitive, Journaled)" \
-                            ["exfat"]="ExFAT" \
-                            [])
+                            ["exfat"]="ExFAT")
 discover () {
     echo "Disconnect the flash drive"
     mkdir -p "$DATA_DIR"
     read -p "When ready press any key to continue..." EMPTY_ANSWER
     ls -l /dev/sd* | grep ^b.*[0-9]$ | rev | cut --delimiter " " --fields 1 | rev > "$DATA_DIR"/before.txt
-    read -p "Connect flash drive press any key to continue..." EMPTY_ANSWER
-    ls -l /dev/sd* | grep ^b.*[0-9]$ | rev | cut --delimiter " " --fields 1 | rev > "$DATA_DIR"/after.txt
-    DISCOVERED_DEVICES=$(diff "$DATA_DIR"/before.txt "$DATA_DIR"/after.txt | rev | cut --only-delimited --delimiter " " --fields 1 | rev)
+    echo "Connect flash drive!"
+    i=1
+    sp="/-\|"
+    echo -n "Detecting... "
+    until [ ! -z $DISCOVERED_DEVICES ]
+    do
+        printf "\b${sp:i++%${#sp}:1}"
+        sleep 0.25
+        ls -l /dev/sd* | grep ^b.*[0-9]$ | rev | cut --delimiter " " --fields 1 | rev > "$DATA_DIR"/after.txt
+        DISCOVERED_DEVICES=$(diff "$DATA_DIR"/before.txt "$DATA_DIR"/after.txt | rev | cut --only-delimited --delimiter " " --fields 1 | rev)
+    done
 }
 
 mount_dev () {
