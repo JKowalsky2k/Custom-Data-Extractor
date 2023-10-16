@@ -45,6 +45,10 @@ detect_filesystem () {
     echo File system: "${FILE_SYSTEMS["$FILE_SYSTEM"]}" \("$FILE_SYSTEM"\)
 }
 
+make_image () {
+    dd if=$1 of=$2/$3/image_$3.img bs=4M status=progress
+}
+
 run () {
     discover
     if [ ! -z "$DISCOVERED_DEVICES" ]
@@ -59,6 +63,7 @@ run () {
             mount_dev "$DEVICE_MOUNT_PATH" "$DEVICE"
             detect_filesystem $DEVICE
             copy_all_data "$DEVICE_MOUNT_PATH" "$DEVICE_NAME"
+            make_image "$DEVICE_MOUNT_PATH" "$COPY_POINT" "$DEVICE_NAME"
             ls -la "$COPY_POINT"/"$DEVICE_NAME"
             umount_dev "$DEVICE_MOUNT_PATH"
         done
