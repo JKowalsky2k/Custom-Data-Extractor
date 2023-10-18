@@ -40,6 +40,10 @@ copy_all_data () {
     sudo cp -a "$1"/. "$COPY_POINT"/"$2"
 }
 
+generate_raport () {
+    
+}
+
 detect_filesystem () {
     FILE_SYSTEM=$(lsblk -n -o FSTYPE $1)
     echo File system: "${FILE_SYSTEMS["$FILE_SYSTEM"]}" \("$FILE_SYSTEM"\)
