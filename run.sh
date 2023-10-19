@@ -36,12 +36,7 @@ umount_dev () {
 }
 
 copy_all_data () {
-    mkdir -p "$COPY_POINT"/"$2"
-    sudo cp -a "$1"/. "$COPY_POINT"/"$2"
-}
-
-generate_raport () {
-    
+    sudo cp -a "$1"/. "$2"
 }
 
 detect_filesystem () {
@@ -49,8 +44,12 @@ detect_filesystem () {
     echo File system: "${FILE_SYSTEMS["$FILE_SYSTEM"]}" \("$FILE_SYSTEM"\)
 }
 
+get_info () {
+    sudo fdisk -l $1 >> "$2"/"$3"/log_"$3".log
+}
+
 make_image () {
-    sudo dd if=$1 of=$2/$3/image_$3.img bs=4M status=progress
+    sudo dc3dd if="$1" hof="$2"hash=sha512
 }
 
 run () {
@@ -61,13 +60,26 @@ run () {
         for DEVICE in $DISCOVERED_DEVICES
         do
             COUNTER=$(( COUNTER+1 ))
+            
             echo "$COUNTER": "$DEVICE"
             DEVICE_NAME=$(echo $DEVICE | cut -d "/" -f 3)
             DEVICE_MOUNT_PATH="$MOUNT_POINT"/"$DEVICE_NAME"
+            DEVICE_DIR_PATH="$COPY_POINT"/$DEVICE_NAME
+            LOG_PATH="$DEVICE_DIR_PATH"/log_"$DEVICE_NAME".log
+            IMAGE_PATH="$DEVICE_DIR_PATH"/image_"$DEVICE_NAME".img
+
+            START_TIME=$(date +%s)
+
+            mkdir -p "$DEVICE_DIR_PATH"
+
+            cat /dev/null > "$LOG_PATH"
+            echo ["$(date +'%Y-%m-%d %H:%M:%S')"] Scan started! >> "$LOG_PATH"
+            echo ["$(date +'%Y-%m-%d %H:%M:%S')"] Device: "$DEVICE_NAME" >> "$LOG_PATH"
+
             mount_dev "$DEVICE_MOUNT_PATH" "$DEVICE"
             detect_filesystem $DEVICE
-            copy_all_data "$DEVICE_MOUNT_PATH" "$DEVICE_NAME"
-            make_image "$DEVICE" "$COPY_POINT" "$DEVICE_NAME"
+            copy_all_data "$DEVICE_MOUNT_PATH" "$DEVICE_DIR_PATH"
+            make_image "$DEVICE" "$IMAGE_PATH"
             ls -la "$COPY_POINT"/"$DEVICE_NAME"
             umount_dev "$DEVICE_MOUNT_PATH"
         done
