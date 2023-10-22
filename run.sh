@@ -11,6 +11,10 @@ TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S')
 DEBUG_FLAG=false
 REPORT_FLAG=true
 
+log () {
+    echo ["$TIMESTAMP"] "$1" | tee -a "$LOG_FILE_PATH"
+}
+
 discover () {
     echo "Disconnect the flash drive"
     mkdir -p "$ROOT_DIR_PATH"
@@ -30,12 +34,14 @@ discover () {
 }
 
 mount_dev () {
-    echo ["$TIMESTAMP"] Mounting \($2\)... | tee -a "$LOG_FILE_PATH"
+    # echo ["$TIMESTAMP"] Mounting \($2\)... | tee -a "$LOG_FILE_PATH"
+    log Mounting \("$2"\)...
     mkdir -p "$1"
     sudo mount -o ro "$2" "$1"
     if [ $? -eq 0 ]
     then
-        echo ["$TIMESTAMP"] Device "$2" mounted successfully | tee -a "$LOG_FILE_PATH"
+        # echo ["$TIMESTAMP"] Device "$2" mounted successfully | tee -a "$LOG_FILE_PATH"
+        log Device "$2" mounted successfully
     fi
 }
 
@@ -61,9 +67,15 @@ detect_filesystem () {
     FILE_SYSTEM=$(lsblk -n -o FSTYPE "$1")
     if [ $DEBUG_FLAG = true ]
     then
-        echo ["$TIMESTAMP"] [DEBUG] File system: $FILE_SYSTEM| tee -a "$LOG_FILE_PATH"
+        echo ["$TIMESTAMP"] [DEBUG] [detect_filesystem] [ARGUMENT] "$1" | tee -a "$LOG_FILE_PATH"
+        echo ["$TIMESTAMP"] [DEBUG] [detect_filesystem] [RETURN] "$FILE_SYSTEM" | tee -a "$LOG_FILE_PATH"
     fi
-    echo File system: "${FILE_SYSTEMS["$FILE_SYSTEM"]}" \("$FILE_SYSTEM"\)
+    if [ -n "$FILE_SYSTEM" ]
+    then
+        echo ["$TIMESTAMP"] Detected file system: "${FILE_SYSTEMS["$FILE_SYSTEM"]}" \("$FILE_SYSTEM"\) | tee -a "$LOG_FILE_PATH"
+    else
+        echo ["$TIMESTAMP"] File system detection error \(could not recognize\) | tee -a "$LOG_FILE_PATH"
+    fi
 }
 
 get_info () {
@@ -92,7 +104,7 @@ create_raport () {
     echo Scan started at: $(date -u -d @$START_TIME +%H:%M:%S) >> "$RAPORT_FILE_PATH"
     echo Device: "$DEVICE" >> "$RAPORT_FILE_PATH"
     
-    DEVICE_SERIAL_NUMBER=$(udevadm info --name=$(echo $DEVICE | tr -d '0123456789') | grep ID_SERIAL_SHORT | cut --delimiter "=" --fields 2)
+    DEVICE_SERIAL_NUMBER=$(get_device_serial_number "$DEVICE")
     if [ -n "$DEVICE_SERIAL_NUMBER" ]
     then
         echo Serial Number: "$DEVICE_SERIAL_NUMBER" >> "$RAPORT_FILE_PATH"
@@ -126,7 +138,7 @@ scan () {
     mount_dev "$DEVICE_MOUNT_PATH" "$DEVICE"
     detect_filesystem "$DEVICE"
     copy_all_data "$DEVICE_MOUNT_PATH" "$DEVICE_COPY_DIR_PATH"
-    create_iso_image "$DEVICE" "$IMAGE_FILE_PATH"
+    # create_iso_image "$DEVICE" "$IMAGE_FILE_PATH"
     ls -la "$DEVICE_COPY_DIR_PATH"
     umount_dev "$DEVICE_MOUNT_PATH"
     
@@ -135,7 +147,7 @@ scan () {
 
     create_raport
 
-    echo ["$TIMESTAMP"] Runtime: "$DEVICE_NAME" \("$RUNTIME" sec\) | tee -a "$LOG_FILE_PATH"
+    echo ["$TIMESTAMP"] Runtime: "$DEVICE" \("$RUNTIME" sec\) | tee -a "$LOG_FILE_PATH"
 }
 
 display_raports () {
@@ -146,6 +158,10 @@ display_raports () {
         cat $RAPORT
         echo "-----------------------------"
     done
+}
+
+get_device_serial_number () {
+    echo $(udevadm info --name=$(echo $1 | tr -d '0123456789') | grep ID_SERIAL_SHORT | cut --delimiter "=" --fields 2)
 }
 
 run () {
@@ -159,24 +175,23 @@ run () {
             
             echo
             echo "$COUNTER": "$DEVICE"
-            scan
-            # if [ -n "$SN" ]
-            # then
-            #     DEVICE_SERIAL_NUMBER=$(udevadm info --name=$(echo $DEVICE | tr -d '0123456789') | grep ID_SERIAL_SHORT | cut --delimiter "=" --fields 2)
-            #     echo Dev_SN: $DEVICE_SERIAL_NUMBER
-            #     if [ "$SN" = "$DEVICE_SERIAL_NUMBER" ]
-            #     then
-            #         echo Found!
-            #         scan
-            #     else
-            #         continue
-            #     fi
-            # else
-            #     scan
-            # fi 
+            if [ -n "$SN" ]
+            then
+                DEVICE_SERIAL_NUMBER=$(get_device_serial_number "$DEVICE")
+                echo Dev_SN: $DEVICE_SERIAL_NUMBER
+                if [ "$SN" = "$DEVICE_SERIAL_NUMBER" ]
+                then
+                    echo Found!
+                    scan
+                else
+                    continue
+                fi
+            else
+                scan
+            fi 
         done
     else
-        echo No devices detected!
+        echo ["$TIMESTAMP"] No devices detected! | tee -a "$LOG_FILE_PATH"
     fi
     if [ $REPORT_FLAG = true ]
     then
@@ -187,23 +202,21 @@ run () {
 while getopts ":u:s:dr" opt; do
     case $opt in
         u)
-        CUSTOM_USER=$OPTARG
-        echo User: $CUSTOM_USER
-        ;;
+            CUSTOM_USER=$OPTARG
+            ;;
         s)
-        SN=$OPTARG
-        echo SN: $SN
-        ;;
+            SN=$OPTARG
+            ;;
         d)
-        DEBUG_FLAG=true
-        ;;
+            DEBUG_FLAG=true
+            ;;
         r)
-        REPORT_FLAG=false
-        ;;
+            REPORT_FLAG=false
+            ;;
         \?)
-        echo "Option -$OPTARG requires an argument." >&2
-        exit 1
-        ;;
+            echo "Option -"$OPTARG" requires an argument." >&2
+            exit 1
+            ;;
     esac
 done
 run
