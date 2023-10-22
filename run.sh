@@ -8,6 +8,8 @@ declare -rA FILE_SYSTEMS=(  ["vfat"]="Virtual FAT" \
                             ["hfsplus"]="Mac OS Extended (Case-sensitive, Journaled)" \
                             ["exfat"]="ExFAT")
 TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S')
+DEBUG_FLAG=false
+REPORT_FLAG=true
 
 discover () {
     echo "Disconnect the flash drive"
@@ -28,11 +30,12 @@ discover () {
 }
 
 mount_dev () {
+    echo ["$TIMESTAMP"] Mounting \($2\)... | tee -a "$LOG_FILE_PATH"
     mkdir -p "$1"
     sudo mount -o ro "$2" "$1"
     if [ $? -eq 0 ]
     then
-        echo ["$TIMESTAMP"] Device $2 mounted successfully | tee -a "$LOG_FILE_PATH"
+        echo ["$TIMESTAMP"] Device "$2" mounted successfully | tee -a "$LOG_FILE_PATH"
     fi
 }
 
@@ -40,7 +43,7 @@ umount_dev () {
     sudo umount "$1"
     if [ $? -eq 0 ]
     then
-        echo ["$TIMESTAMP"] Device $DEVICE unmounted successfully | tee -a "$LOG_FILE_PATH"
+        echo ["$TIMESTAMP"] Device "$DEVICE" unmounted successfully | tee -a "$LOG_FILE_PATH"
     fi
     rmdir "$1"
 }
@@ -56,7 +59,10 @@ copy_all_data () {
 
 detect_filesystem () {
     FILE_SYSTEM=$(lsblk -n -o FSTYPE "$1")
-    echo [DEBUG] File system: $FILE_SYSTEM| tee -a "$LOG_FILE_PATH"
+    if [ $DEBUG_FLAG = true ]
+    then
+        echo ["$TIMESTAMP"] [DEBUG] File system: $FILE_SYSTEM| tee -a "$LOG_FILE_PATH"
+    fi
     echo File system: "${FILE_SYSTEMS["$FILE_SYSTEM"]}" \("$FILE_SYSTEM"\)
 }
 
@@ -76,9 +82,9 @@ create_iso_image () {
 create_raport () {
     cat /dev/null > "$RAPORT_FILE_PATH"
     
-    if [ -n "$USER" ]
+    if [ -n "$CUSTOM_USER" ]
     then
-        echo User: "$USER" >> "$RAPORT_FILE_PATH"
+        echo User: "$CUSTOM_USER" >> "$RAPORT_FILE_PATH"
     else
         echo User: Anon >> "$RAPORT_FILE_PATH"
     fi
@@ -100,6 +106,48 @@ create_raport () {
     echo Runtime: $RUNTIME sec >> "$RAPORT_FILE_PATH"
 }
 
+scan () {
+    DEVICE_NAME=$(echo "$DEVICE" | cut --delimiter "/" --fields 3)
+    DEVICE_MOUNT_PATH="$MOUNT_POINT"/"$DEVICE_NAME"
+    DEVICE_DIR_PATH="$COPY_POINT"/"$DEVICE_NAME"
+    DEVICE_COPY_DIR_PATH="$DEVICE_DIR_PATH"/data
+    LOG_FILE_PATH="$DEVICE_DIR_PATH"/log_"$DEVICE_NAME".log
+    IMAGE_FILE_PATH="$DEVICE_DIR_PATH"/image_"$DEVICE_NAME".img
+    RAPORT_FILE_PATH="$DEVICE_DIR_PATH"/raport_"$DEVICE_NAME".txt
+
+    START_TIME=$(date +%s)
+
+    mkdir -p "$DEVICE_DIR_PATH"
+    mkdir -p "$ROOT_DIR_PATH"
+
+    cat /dev/null > "$LOG_FILE_PATH"
+    echo ["$TIMESTAMP"] Scan started | tee -a "$LOG_FILE_PATH"
+    echo ["$TIMESTAMP"] Device: "$DEVICE_NAME" | tee -a "$LOG_FILE_PATH"
+    mount_dev "$DEVICE_MOUNT_PATH" "$DEVICE"
+    detect_filesystem "$DEVICE"
+    copy_all_data "$DEVICE_MOUNT_PATH" "$DEVICE_COPY_DIR_PATH"
+    create_iso_image "$DEVICE" "$IMAGE_FILE_PATH"
+    ls -la "$DEVICE_COPY_DIR_PATH"
+    umount_dev "$DEVICE_MOUNT_PATH"
+    
+    END_TIME=$(date +%s)
+    RUNTIME=$(( END_TIME-START_TIME ))
+
+    create_raport
+
+    echo ["$TIMESTAMP"] Runtime: "$DEVICE_NAME" \("$RUNTIME" sec\) | tee -a "$LOG_FILE_PATH"
+}
+
+display_raports () {
+    echo "-----------------------------"
+    RAPORTS_PATH=$(find $ROOT_DIR_PATH -name "*.txt" | grep raport)
+    for RAPORT in $RAPORTS_PATH
+    do
+        cat $RAPORT
+        echo "-----------------------------"
+    done
+}
+
 run () {
     discover
     if [ -n "$DISCOVERED_DEVICES" ]
@@ -111,58 +159,46 @@ run () {
             
             echo
             echo "$COUNTER": "$DEVICE"
-
-            DEVICE_NAME=$(echo "$DEVICE" | cut --delimiter "/" --fields 3)
-            DEVICE_MOUNT_PATH="$MOUNT_POINT"/"$DEVICE_NAME"
-            DEVICE_DIR_PATH="$COPY_POINT"/"$DEVICE_NAME"
-            ROOT_DIR_PATH="$DEVICE_DIR_PATH"/data
-            LOG_FILE_PATH="$DEVICE_DIR_PATH"/log_"$DEVICE_NAME".log
-            IMAGE_FILE_PATH="$DEVICE_DIR_PATH"/image_"$DEVICE_NAME".img
-            RAPORT_FILE_PATH="$DEVICE_DIR_PATH"/raport_"$DEVICE_NAME".txt
-
-            START_TIME=$(date +%s)
-
-            mkdir -p "$DEVICE_DIR_PATH"
-            mkdir -p "$ROOT_DIR_PATH"
-
-            cat /dev/null > "$LOG_FILE_PATH"
-            echo ["$TIMESTAMP"] Scan started | tee -a "$LOG_FILE_PATH"
-            echo ["$TIMESTAMP"] Device: "$DEVICE_NAME" | tee -a "$LOG_FILE_PATH"
-            mount_dev "$DEVICE_MOUNT_PATH" "$DEVICE"
-            detect_filesystem "$DEVICE"
-            copy_all_data "$DEVICE_MOUNT_PATH" "$ROOT_DIR_PATH"
-            create_iso_image "$DEVICE" "$IMAGE_FILE_PATH"
-            ls -la "$ROOT_DIR_PATH"
-            umount_dev "$DEVICE_MOUNT_PATH"
-            
-            END_TIME=$(date +%s)
-            RUNTIME=$(( END_TIME-START_TIME ))
-
-            create_raport
-
-            echo ["$TIMESTAMP"] Runtime: "$DEVICE_NAME" \("$RUNTIME" sec\) | tee -a "$LOG_FILE_PATH"
+            scan
+            # if [ -n "$SN" ]
+            # then
+            #     DEVICE_SERIAL_NUMBER=$(udevadm info --name=$(echo $DEVICE | tr -d '0123456789') | grep ID_SERIAL_SHORT | cut --delimiter "=" --fields 2)
+            #     echo Dev_SN: $DEVICE_SERIAL_NUMBER
+            #     if [ "$SN" = "$DEVICE_SERIAL_NUMBER" ]
+            #     then
+            #         echo Found!
+            #         scan
+            #     else
+            #         continue
+            #     fi
+            # else
+            #     scan
+            # fi 
         done
     else
         echo No devices detected!
     fi
-    echo "-----------------------------"
-    RAPORTS_PATH=$(find $ROOT_DIR_PATH -name "*.txt" | grep raport)
-    for RAPORT in $RAPORTS_PATH
-    do
-        cat $RAPORT
-        echo "-----------------------------"
-    done
+    if [ $REPORT_FLAG = true ]
+    then
+        display_raports
+    fi
 }
 
-while getopts ":u:s:" opt; do
+while getopts ":u:s:dr" opt; do
     case $opt in
         u)
-        USER=$OPTARG
-        echo User: $USER
+        CUSTOM_USER=$OPTARG
+        echo User: $CUSTOM_USER
         ;;
         s)
         SN=$OPTARG
         echo SN: $SN
+        ;;
+        d)
+        DEBUG_FLAG=true
+        ;;
+        r)
+        REPORT_FLAG=false
         ;;
         \?)
         echo "Option -$OPTARG requires an argument." >&2
