@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PROGRAM_NAME="CDE"
-ROOT_DIR_PATH="$HOME"/"$PROGRAM_NAME"
+ROOT_DIR_PATH=/home/"$USER"/"$PROGRAM_NAME"
 MOUNT_POINT="$ROOT_DIR_PATH"/mnt
 COPY_POINT="$ROOT_DIR_PATH"/data
 declare -rA FILE_SYSTEMS=(  ["vfat"]="Virtual FAT" \
@@ -32,7 +32,7 @@ mount_dev () {
     sudo mount -o ro "$2" "$1"
     if [ $? -eq 0 ]
     then
-        echo ["$TIMESTAMP"] Device $2 mounted successfully | tee -a tee -a "$LOG_FILE_PATH"
+        echo ["$TIMESTAMP"] Device $2 mounted successfully | tee -a "$LOG_FILE_PATH"
     fi
 }
 
@@ -40,7 +40,7 @@ umount_dev () {
     sudo umount "$1"
     if [ $? -eq 0 ]
     then
-        echo ["$TIMESTAMP"] Device $DEVICE unmounted successfully | tee -a tee -a "$LOG_FILE_PATH"
+        echo ["$TIMESTAMP"] Device $DEVICE unmounted successfully | tee -a "$LOG_FILE_PATH"
     fi
     rmdir "$1"
 }
@@ -87,7 +87,6 @@ create_raport () {
     echo Device: "$DEVICE" >> "$RAPORT_FILE_PATH"
     
     DEVICE_SERIAL_NUMBER=$(udevadm info --name=$(echo $DEVICE | tr -d '0123456789') | grep ID_SERIAL_SHORT | cut --delimiter "=" --fields 2)
-    echo DSN: $DEVICE_SERIAL_NUMBER
     if [ -n "$DEVICE_SERIAL_NUMBER" ]
     then
         echo Serial Number: "$DEVICE_SERIAL_NUMBER" >> "$RAPORT_FILE_PATH"
@@ -116,7 +115,7 @@ run () {
             DEVICE_NAME=$(echo "$DEVICE" | cut --delimiter "/" --fields 3)
             DEVICE_MOUNT_PATH="$MOUNT_POINT"/"$DEVICE_NAME"
             DEVICE_DIR_PATH="$COPY_POINT"/"$DEVICE_NAME"
-            ROOT_DIR_PATH_PATH="$DEVICE_DIR_PATH"/data
+            ROOT_DIR_PATH="$DEVICE_DIR_PATH"/data
             LOG_FILE_PATH="$DEVICE_DIR_PATH"/log_"$DEVICE_NAME".log
             IMAGE_FILE_PATH="$DEVICE_DIR_PATH"/image_"$DEVICE_NAME".img
             RAPORT_FILE_PATH="$DEVICE_DIR_PATH"/raport_"$DEVICE_NAME".txt
@@ -147,7 +146,7 @@ run () {
         echo No devices detected!
     fi
     echo "-----------------------------"
-    RAPORTS_PATH=$(find $ROOT_DIR_PATH/ *.txt | grep raport)
+    RAPORTS_PATH=$(find $ROOT_DIR_PATH -name "*.txt" | grep raport)
     for RAPORT in $RAPORTS_PATH
     do
         cat $RAPORT
