@@ -1,14 +1,9 @@
 #!/bin/bash
 
-PROGRAM_NAME="CDE"
-ROOT_DIR_PATH=/home/"$USER"/"$PROGRAM_NAME"
-MOUNT_DIR_PATH="$ROOT_DIR_PATH"/mnt
-COPY_DIR_PATH="$ROOT_DIR_PATH"/devices
-
-TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S')
-
 CUSTOM_USER="Anonymous"
 CUSTOM_SERIAL_NUMBER=""
+SAVE_DIR_PATH="/home/"$USER""
+
 DEBUG=false
 DISPLAY_RAPORT=false
 
@@ -20,6 +15,10 @@ do
     elif [ $ARG = "--serial-number" -o $ARG = "-sn" ]
     then
         CUSTOM_SERIAL_NUMBER="$2"
+    elif [ $ARG = "--save-dir" -o $ARG = "-sd" ]
+        SAVE_DIR_PATH="$2"
+    then
+        CUSTOM_SERIAL_NUMBER="$2"
     elif [ $ARG = "--debug" -o $ARG = "-d" ]
     then
         DEBUG=true
@@ -29,8 +28,14 @@ do
     else
         echo -n ""
     fi 
-
 done
+
+PROGRAM_NAME="CDE"
+ROOT_DIR_PATH="$SAVE_DIR_PATH"/"$PROGRAM_NAME"
+MOUNT_DIR_PATH="$ROOT_DIR_PATH"/mnt
+COPY_DIR_PATH="$ROOT_DIR_PATH"/devices
+
+TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S')
 
 log () {
     echo ["$TIMESTAMP"] "$@" | tee -a "$LOG_FILE_PATH"
