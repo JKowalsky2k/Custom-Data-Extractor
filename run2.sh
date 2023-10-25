@@ -16,9 +16,8 @@ do
     then
         CUSTOM_SERIAL_NUMBER="$2"
     elif [ $ARG = "--save-dir" -o $ARG = "-sd" ]
-        SAVE_DIR_PATH="$2"
     then
-        CUSTOM_SERIAL_NUMBER="$2"
+        SAVE_DIR_PATH="$4"
     elif [ $ARG = "--debug" -o $ARG = "-d" ]
     then
         DEBUG=true
@@ -136,7 +135,12 @@ create_iso_image () {
     DD_START_TIME=$(date +%s)
     log "Making image..."
 
-    sudo dc3dd if="$1" hof="$2" hash=sha512
+    sudo dc3dd if="$1" hof="$2" hash=sha512 hlog="$DEVICE_DIR_PATH"/dc3dd_hash.log
+    INPUT_HASH=$(cat "$DEVICE_DIR_PATH"/dc3dd_hash.log | grep "input" -A 1 | tail -n 1 | cut --delimiter " " --fields 4)
+    log  "Input HASH (SHA512): "$INPUT_HASH""
+
+    OUTPUT_HASH=$(cat "$DEVICE_DIR_PATH"/dc3dd_hash.log | grep "output" -A 1 | tail -n 1 | cut --delimiter " " --fields 5)
+    log  "Output HASH (SHA512): "$OUTPUT_HASH""
 
     DD_END_TIME=$(date +%s)
     DD_RUNTIME=$(( DD_END_TIME-DD_START_TIME ))
@@ -164,6 +168,8 @@ create_raport () {
     fi
 
     echo File system: "$FILE_SYSTEM" >> "$RAPORT_FILE_PATH"
+    echo "Input HASH (SHA512): "$INPUT_HASH"" >> "$RAPORT_FILE_PATH"
+    echo "Output HASH (SHA512): "$OUTPUT_HASH"" >> "$RAPORT_FILE_PATH"
     
     sudo fdisk -l "$DEVICE" >> "$RAPORT_FILE_PATH"
 
