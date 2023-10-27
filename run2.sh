@@ -67,8 +67,10 @@ discover () {
         # Animacja krecacego sie kola
         printf "\b${sp:i++%${#sp}:1}"
         sleep 0.25
+        
         # Sparsowanie aktualnie podlacoznych urzadzen
         ls -l /dev/sd* | grep ^b.*[0-9]$ | rev | cut --delimiter " " --fields 1 | rev > "$ROOT_DIR_PATH"/after.txt
+        
         # Wykrycie nowych urzadzen na podstawie porownania plikow before.txt i after.txt
         DISCOVERED_DEVICES=$(diff "$ROOT_DIR_PATH"/before.txt "$ROOT_DIR_PATH"/after.txt | rev | cut --only-delimited --delimiter " " --fields 1 | rev)
     done
