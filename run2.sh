@@ -99,7 +99,7 @@ mount_device () {
     fi
 }
 
-# Funckja odpowiadajaca za odmontowanie urzadzenia 
+# Funkcja odpowiadajaca za odmontowanie urzadzenia 
 umount_device () {
     
     # Warunek czy wyswietlac dodatkowe informacje
@@ -109,6 +109,8 @@ umount_device () {
     fi
 
     log "Unmounting ("$1")..."
+    
+    # Odmotmowanie urzadzenia
     sudo umount "$1"
     if [ $? -eq 0 ]
     then
@@ -120,7 +122,7 @@ umount_device () {
     rmdir "$1"
 }
 
-# Funckja odpowiadajca za wykrycie systemu plikow z urzadzenia
+# Funkcja odpowiadajca za wykrycie systemu plikow z urzadzenia
 detect_filesystem () {
     
     # Sparsowanie informacji z "fdisk -l" aby wyciagnc infromacje o systemie plikow
@@ -143,7 +145,7 @@ detect_filesystem () {
 
 }
 
-# Funckja odpowieadajca za skopiowanie danych z nosnika 
+# Funkcja odpowieadajca za skopiowanie danych z nosnika 
 copy_all_data () {
     
     # Warunek czy wyswietlac dodatkowe informacje
@@ -165,7 +167,7 @@ copy_all_data () {
     log "Copying finished after "$CP_RUNTIME" sec"
 }
 
-# Funckja odpowiedzialna za wykonanie obrazu nosnika
+# Funkcja odpowiedzialna za wykonanie obrazu nosnika
 create_iso_image () {
     
     # Warunek czy wyswietlac dodatkowe informacje
@@ -194,12 +196,12 @@ create_iso_image () {
     log "Making image finished after "$DD_RUNTIME" sec"
 }
 
-# Funckja wyciagania nummeru seryjnego z urzadzenia
+# Funkcja wyciagania nummeru seryjnego z urzadzenia
 get_device_serial_number () {
     echo $(udevadm info --name=$(echo $1 | tr -d '0123456789') | grep ID_SERIAL_SHORT | cut --delimiter "=" --fields 2)
 }
 
-# Funckja odpowiedzialna za stowrzenie pilku z raportem
+# Funkcja odpowiedzialna za stowrzenie pilku z raportem
 create_raport () {
 
     # Stworzenie pustego pliku
@@ -289,7 +291,7 @@ scan () {
     log "Runtime: "$DEVICE" ("$RUNTIME" sec)"
 }
 
-# Funckja odpowiedzialna za wyswietlanie wszystkich wygenerowanych raportow  
+# Funkcja odpowiedzialna za wyswietlanie wszystkich wygenerowanych raportow  
 display_raports () {
     echo "-----------------------------"
     # Znalezienie sciezek bezwzgledncyh wszystkich wygenerowanych raportow
@@ -301,7 +303,7 @@ display_raports () {
     done
 }
 
-# Funckja zawierajaca glowna logike programu 
+# Funkcja zawierajaca glowna logike programu 
 run () {
 
     # Wykrycie nowych urzadzen
