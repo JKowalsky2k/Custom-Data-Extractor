@@ -47,16 +47,20 @@ log () {
 # Funkcja odpowiadajaca za wykrycie nowo podlaczonych urzadzen
 discover () {
     echo "Disconnect the flash drive"
+    
     # Stworzenie glownego folderu
     mkdir -p "$ROOT_DIR_PATH"
-``` # Czekanie na informacje od uzytkownika
+`   
+    # Czekanie na informacje od uzytkownika
     read -p "When ready press any key to continue..." EMPTY_ANSWER
+    
     # Sparsowanie akutalnie podlaczonych urzadzen
     ls -l /dev/sd* | grep ^b.*[0-9]$ | rev | cut --delimiter " " --fields 1 | rev > "$ROOT_DIR_PATH"/before.txt
     echo "Connect flash drive!"
     i=1
     sp="/-\|"
     echo -n "Detecting... "
+    
     # Wykrywanie nowo podlaczonych urzadzen
     until [ -n "$DISCOVERED_DEVICES" ]
     do
