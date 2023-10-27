@@ -85,6 +85,8 @@ mount_device () {
 
     log "Mounting ("$1")..."
     mkdir -p "$2"
+
+    # Zamontowanie urzadzenia w trybie Read-Only
     sudo mount -o ro "$1" "$2"
     if [ $? -eq 0 ]
     then
