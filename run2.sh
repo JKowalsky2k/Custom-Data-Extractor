@@ -47,24 +47,33 @@ log () {
 # Funkcja odpowiadajaca za wykrycie nowo podlaczonych urzadzen
 discover () {
     echo "Disconnect the flash drive"
+    # Stworzenie glownego folderu
     mkdir -p "$ROOT_DIR_PATH"
+``` # Czekanie na informacje od uzytkownika
     read -p "When ready press any key to continue..." EMPTY_ANSWER
+    # Sparsowanie akutalnie podlaczonych urzadzen
     ls -l /dev/sd* | grep ^b.*[0-9]$ | rev | cut --delimiter " " --fields 1 | rev > "$ROOT_DIR_PATH"/before.txt
     echo "Connect flash drive!"
     i=1
     sp="/-\|"
     echo -n "Detecting... "
+    # Wykrywanie nowo podlaczonych urzadzen
     until [ -n "$DISCOVERED_DEVICES" ]
     do
+        # Animacja krecacego sie kola
         printf "\b${sp:i++%${#sp}:1}"
         sleep 0.25
+        # Sparsowanie aktualnie podlacoznych urzadzen
         ls -l /dev/sd* | grep ^b.*[0-9]$ | rev | cut --delimiter " " --fields 1 | rev > "$ROOT_DIR_PATH"/after.txt
+        # Wykrycie nowych urzadzen na podstawie porownania plikow before.txt i after.txt
         DISCOVERED_DEVICES=$(diff "$ROOT_DIR_PATH"/before.txt "$ROOT_DIR_PATH"/after.txt | rev | cut --only-delimited --delimiter " " --fields 1 | rev)
     done
 }
 
 # Funkcja odpowiadajaca za zamontowanie urzadzenia w trybie Read-Only 
 mount_device () {
+    
+    # Warunek czy wyswietlac dodatkowe informacje
     if [ "$DEBUG" = "true" ]
     then
         log "[DEBUG] ["mount_device"] [ARGUMENT]" "$1"\, "$2" 
@@ -84,6 +93,8 @@ mount_device () {
 
 # Funckja odpowiadajaca za odmontowanie urzadzenia 
 umount_device () {
+    
+    # Warunek czy wyswietlac dodatkowe informacje
     if [ "$DEBUG" = "true" ]
     then
         log "[DEBUG] [umount_device] [ARGUMENT] "$1"" 
@@ -197,6 +208,7 @@ create_raport () {
     
     # Umieszczenie informacji o numerze seryjnym
     DEVICE_SERIAL_NUMBER=$(get_device_serial_number "$DEVICE")
+    # Sprawdzenie czy udalo sie odczytac numer seryjny
     if [ -n "$DEVICE_SERIAL_NUMBER" ]
     then
         echo Serial Number: "$DEVICE_SERIAL_NUMBER" >> "$RAPORT_FILE_PATH"
