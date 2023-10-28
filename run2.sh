@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Zmienne (z domyslnymi wartsciami) zawierajace flagi i stale, ktre modyfikuja dzialanie programu
+# Zmienne (z domyslnymi wartosciami) zawierajace flagi i stale, ktore modyfikuja dzialanie programu
 CUSTOM_USER="Anonymous"
 CUSTOM_SERIAL_NUMBER=""
 SAVE_DIR_PATH="/home/"$USER""
@@ -30,31 +30,31 @@ do
     fi 
 done
 
-# Sciezki definiujace podstawowe trzewo katalogow
+# Sciezki definiujace podstawowe drzewo katalogow
 PROGRAM_NAME="CDE"
 ROOT_DIR_PATH="$SAVE_DIR_PATH"/"$PROGRAM_NAME"
 MOUNT_DIR_PATH="$ROOT_DIR_PATH"/mnt
 COPY_DIR_PATH="$ROOT_DIR_PATH"/devices
 
-# Zmianna zawierajaca obecna date (wykorzystywane do tworzenia logow)
+# Zmienna zawierajaca obecna date (wykorzystywane do tworzenia logow)
 TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S')
 
-# Funkcja odpowiadajaca za dopisywanie zdarzen do pliku z logami
+# Funkcja odpowiedzialna za dopisywanie zdarzen do pliku z logami
 log () {
     echo ["$TIMESTAMP"] "$@" | tee -a "$LOG_FILE_PATH"
 }
 
-# Funkcja odpowiadajaca za wykrycie nowo podlaczonych urzadzen
+# Funkcja odpowiedzialna za wykrycie nowo podlaczonych urzadzen
 discover () {
     echo "Disconnect the flash drive"
     
     # Stworzenie glownego folderu
     mkdir -p "$ROOT_DIR_PATH"
-`   
+
     # Czekanie na informacje od uzytkownika
     read -p "When ready press any key to continue..." EMPTY_ANSWER
     
-    # Sparsowanie akutalnie podlaczonych urzadzen
+    # Sparsowanie aktualnie podlaczonych urzadzen
     ls -l /dev/sd* | grep ^b.*[0-9]$ | rev | cut --delimiter " " --fields 1 | rev > "$ROOT_DIR_PATH"/before.txt
     echo "Connect flash drive!"
     i=1
@@ -76,7 +76,7 @@ discover () {
     done
 }
 
-# Funkcja odpowiadajaca za zamontowanie urzadzenia w trybie Read-Only 
+# Funkcja odpowiedzialna za zamontowanie urzadzenia w trybie Read-Only 
 mount_device () {
     
     # Warunek czy wyswietlac dodatkowe informacje
@@ -99,7 +99,7 @@ mount_device () {
     fi
 }
 
-# Funkcja odpowiadajaca za odmontowanie urzadzenia 
+# Funkcja odpowiedzialna za odmontowanie urzadzenia 
 umount_device () {
     
     # Warunek czy wyswietlac dodatkowe informacje
@@ -122,10 +122,10 @@ umount_device () {
     rmdir "$1"
 }
 
-# Funkcja odpowiadajca za wykrycie systemu plikow z urzadzenia
+# Funkcja odpowiedzialna za wykrycie systemu plikow z urzadzenia
 detect_filesystem () {
     
-    # Sparsowanie informacji z "fdisk -l" aby wyciagnc infromacje o systemie plikow
+    # Sparsowanie informacji z "fdisk -l" aby wyciagnc informacje o systemie plikow
     FILE_SYSTEM=$(sudo fdisk -l $(echo "$1" | tr -d '0123456789') | tail -n 1 | rev | cut --delimiter " " --fields 1 | rev)
     
     # Warunek czy wyswietlac dodatkowe informacje
@@ -145,7 +145,7 @@ detect_filesystem () {
 
 }
 
-# Funkcja odpowieadajca za skopiowanie danych z nosnika 
+# Funkcja odpowiedzialna za skopiowanie danych z nosnika 
 copy_all_data () {
     
     # Warunek czy wyswietlac dodatkowe informacje
@@ -158,10 +158,10 @@ copy_all_data () {
     CP_START_TIME=$(date +%s)
     log "Copying..."
     
-    # Wykorzystanie polecenia cp do prostego skopiowania pikow 
+    # Wykorzystanie polecenia cp do prostego skopiowania plikow 
     sudo cp -a "$1"/. "$2"
     
-    # Zakoczenie liczenia czasu i oblicznia ile trwala operacja kopiowania
+    # Zakoczenie liczenia czasu i obliczenie ile trwala operacja kopiowania
     CP_END_TIME=$(date +%s)
     CP_RUNTIME=$(( CP_END_TIME-CP_START_TIME ))
     log "Copying finished after "$CP_RUNTIME" sec"
@@ -180,7 +180,7 @@ create_iso_image () {
     DD_START_TIME=$(date +%s)
     log "Making image..."
 
-    # Wykorzystanie programu dc3dd do stowrzenia obrazu nosnika
+    # Wykorzystanie programu dc3dd do stworzenia obrazu nosnika
     # Program dodatkowo liczy funkcje skrotu
     sudo dc3dd if="$1" hof="$2" hash=sha512 hlog="$DEVICE_DIR_PATH"/dc3dd_hash.log
     
@@ -190,7 +190,7 @@ create_iso_image () {
     OUTPUT_HASH=$(cat "$DEVICE_DIR_PATH"/dc3dd_hash.log | grep "output" -A 1 | tail -n 1 | cut --delimiter " " --fields 5)
     log  "Output HASH (SHA512): "$OUTPUT_HASH""
 
-    # Zakoczenie liczenia czasu i oblicznia ile trwala operacja tworzenia obazu
+    # Zakoczenie liczenia czasu i oblicznia ile trwala operacja tworzenia obrazu
     DD_END_TIME=$(date +%s)
     DD_RUNTIME=$(( DD_END_TIME-DD_START_TIME ))
     log "Making image finished after "$DD_RUNTIME" sec"
@@ -201,7 +201,7 @@ get_device_serial_number () {
     echo $(udevadm info --name=$(echo $1 | tr -d '0123456789') | grep ID_SERIAL_SHORT | cut --delimiter "=" --fields 2)
 }
 
-# Funkcja odpowiedzialna za stowrzenie pilku z raportem
+# Funkcja odpowiedzialna za stowrzenie pliku z raportem
 create_raport () {
 
     # Stworzenie pustego pliku
@@ -218,6 +218,7 @@ create_raport () {
     
     # Umieszczenie informacji o numerze seryjnym
     DEVICE_SERIAL_NUMBER=$(get_device_serial_number "$DEVICE")
+    
     # Sprawdzenie czy udalo sie odczytac numer seryjny
     if [ -n "$DEVICE_SERIAL_NUMBER" ]
     then
@@ -229,7 +230,7 @@ create_raport () {
     # Umieszczenie informacji o systemie plikow
     echo File system: "$FILE_SYSTEM" >> "$RAPORT_FILE_PATH"
 
-    # Umieszczenie informacji o warosci HASHa dla urzadzenia
+    # Umieszczenie informacji o wartosci HASHa dla urzadzenia
     echo "Input HASH (SHA512): "$INPUT_HASH"" >> "$RAPORT_FILE_PATH"
 
     # Umieszczenie informacji o wartosci HASHa dla obrazu
@@ -238,15 +239,15 @@ create_raport () {
     # Umieszczenie dodatkowych informacji urzadzeniu
     sudo fdisk -l "$DEVICE" >> "$RAPORT_FILE_PATH"
 
-    # Umieszczenie informacji o zakonczeniu raportu i czasie calego skanu
+    # Umieszczenie informacji o zakonczeniu raportu i czasie trwania calego skanu
     echo Scan ended at: $(date -u -d @$END_TIME +%H:%M:%S) >> "$RAPORT_FILE_PATH"
     echo Runtime: $RUNTIME sec >> "$RAPORT_FILE_PATH"
 }
 
-# Funkcja odpowiadajaca za wykoanie skanu wykrytych urzadzen i zebranie wszystkich informacji
+# Funkcja odpowiedzialna za wykonanie skanu wykrytych urzadzen i zebranie wszystkich informacji
 scan () {
 
-    # Sparsowanie nazwy uzadzania z katalogu na podstawie listingu z katalogu /dev
+    # Sparsowanie nazwy uzadzania na podstawie listingu z katalogu /dev
     DEVICE_NAME=$(echo "$DEVICE" | cut --delimiter "/" --fields 3)
     
     # Sciezki do potrzebnych katalogow
@@ -262,14 +263,14 @@ scan () {
     # Rozpoczecia licznia czasu dla procesu skanowania
     START_TIME=$(date +%s)
 
-    # Stworzenie potzrbnych katalogow
+    # Stworzenie potrzebnych katalogow
     mkdir -p "$DEVICE_DIR_PATH"
     mkdir -p "$DEVICE_COPY_DIR_PATH"
 
-    # Wyszyczenie pliku z logami
+    # Wyczyszczenie pliku z logami
     cat /dev/null > "$LOG_FILE_PATH"
 
-    # Wypisanie inforamcji, ktore i jakie urzadzenie jest skanowane
+    # Wypisanie informacji, ktore i jakie urzadzenie jest skanowane
     log "Scan No. "$COUNTER" started (Device: "$DEVICE")"
 
     # Pobranie inforamcji z i o urzadzeniu
@@ -280,11 +281,11 @@ scan () {
     ls -la "$DEVICE_COPY_DIR_PATH"
     umount_device "$DEVICE_MOUNT_PATH"
     
-    # Zakoczenie liczenia czasu i oblicznia ile trwala operacja skanowania
+    # Zakoczenie liczenia czasu i obliczenie ile trwala operacja skanowania
     END_TIME=$(date +%s)
     RUNTIME=$(( END_TIME-START_TIME ))
 
-    # Wygenerowanie rapotu dla aktualnie skanowanego urzadzenia
+    # Wygenerowanie raportu dla aktualnie skanowanego urzadzenia
     create_raport
 
     # Wypisanie informacji o czasie skanowania
@@ -324,16 +325,16 @@ run () {
         done
     else
         
-        # Wyswieltenie informacji o nie znalezieniu urzadzen
+        # Wyswietlenie informacji o nie znalezieniu urzadzen
         log No devices detected
     fi
 
-    # Warunek na sprawdzenie czy wyswietlic dodatkowo raporty w konsoli
+    # Warunek na sprawdzenie czy wyswietlic dodatkowo raporty w terminalu
     if [ $DISPLAY_RAPORT = true ]
     then
         log "Print summary raport"
         
-        # wyswietlenie raportow  
+        # Wyswietlenie raportow  
         display_raports
     fi
 }
