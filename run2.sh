@@ -36,11 +36,10 @@ ROOT_DIR_PATH="$SAVE_DIR_PATH"/"$PROGRAM_NAME"
 MOUNT_DIR_PATH="$ROOT_DIR_PATH"/mnt
 COPY_DIR_PATH="$ROOT_DIR_PATH"/devices
 
-# Zmienna zawierajaca obecna date (wykorzystywane do tworzenia logow)
-TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S')
-
 # Funkcja odpowiedzialna za dopisywanie zdarzen do pliku z logami
 log () {
+    # Zmienna zawierajaca obecna date (wykorzystywane do tworzenia logow)
+    TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S')
     echo ["$TIMESTAMP"] "$@" | tee -a "$LOG_FILE_PATH"
 }
 
@@ -211,7 +210,7 @@ create_raport () {
     echo User: "$CUSTOM_USER" >> "$RAPORT_FILE_PATH"
     
     # Umieszczenie informacji o dacie rozpoczecia skanowania danego urzadzenia 
-    echo Scan started at: $(date -u -d @$START_TIME +%H:%M:%S) >> "$RAPORT_FILE_PATH"
+    echo Scan started at: $(date -d @$START_TIME +%H:%M:%S) >> "$RAPORT_FILE_PATH"
     
     # Umieszczenie informacji o urzadzeniu
     echo Device: "$DEVICE" >> "$RAPORT_FILE_PATH"
@@ -240,7 +239,7 @@ create_raport () {
     sudo fdisk -l "$DEVICE" >> "$RAPORT_FILE_PATH"
 
     # Umieszczenie informacji o zakonczeniu raportu i czasie trwania calego skanu
-    echo Scan ended at: $(date -u -d @$END_TIME +%H:%M:%S) >> "$RAPORT_FILE_PATH"
+    echo Scan ended at: $(date -d @$END_TIME +%H:%M:%S) >> "$RAPORT_FILE_PATH"
     echo Runtime: $RUNTIME sec >> "$RAPORT_FILE_PATH"
 }
 
